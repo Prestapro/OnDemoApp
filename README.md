@@ -89,27 +89,40 @@ OnDemoApp/
 
 ### 🔐 Code Signing Troubleshooting
 
-If you have imported the bundled `OnDemoApp.p12` certificate but Xcode still reports a
-code-signing error, try the following steps:
+Xcode needs an Apple Development certificate and provisioning profile to run the app on a
+physical device. If you see "The executable is not codesigned" when installing to an
+iPhone, follow one of the paths below:
 
-1. **Install to the Login Keychain**: Double-click the `.p12` file and install it into the
-   `login` keychain, making sure the private key appears directly under *My Certificates*.
-2. **Trust Settings**: Open Keychain Access, locate the *OnDemoApp* certificate, open the
-   info panel, and ensure the certificate is set to *Use System Defaults*. If a warning is
-   shown, expand *Trust* and select *Always Trust*, then restart Xcode.
-3. **Refresh Signing Assets**: In Xcode, go to *Settings ▸ Accounts*, select your Apple ID,
-   and press *Download Manual Profiles* to refresh provisioning profiles that match the
-   imported certificate.
-4. **Select the Signing Identity**: In the project editor, select the *OnDemoApp* target,
-   open the *Signing & Capabilities* tab, and explicitly choose the *OnDemoApp* team and
-   signing certificate from the *Signing Certificate* dropdown.
-5. **Clean Derived Data**: From the Xcode menu choose *Product ▸ Clean Build Folder* and,
-   if the error persists, remove the project's Derived Data from *Settings ▸ Locations ▸
-   Derived Data*. Relaunch Xcode before rebuilding.
+#### Option A – Use Your Own Apple ID (recommended)
 
-These steps usually clear residual signing errors after importing a `.p12` file. If the
-problem remains, confirm that the provisioning profile includes the correct bundle
-identifier (`com.example.OnDemoApp`) and that the certificate has not expired.
+1. **Open the Project**: In Xcode select the *OnDemoApp* target and switch to the
+   *Signing & Capabilities* tab.
+2. **Select a Team**: Choose your personal or company Apple ID team from the *Team*
+   dropdown. Because the project no longer hard-codes a team identifier, Xcode will create
+   the required provisioning profile for your account automatically.
+3. **Update the Bundle ID if Needed**: Personal teams require a unique bundle identifier.
+   Change `com.prestapro.OnDemoApp` to something under your reverse-domain namespace
+   (for example `com.yourname.OnDemoApp`).
+4. **Clean & Build**: Run *Product ▸ Clean Build Folder*, then build again. Xcode will
+   regenerate the signing assets and install the app on your device.
+
+#### Option B – Import the Bundled Certificate
+
+If you have access to the shared signing assets that ship with the repository:
+
+1. **Install the Certificate**: Double-click `OnDemoApp.p12`, enter the password supplied
+   by your team, and install it into the `login` keychain so the private key appears under
+   *My Certificates*.
+2. **Download Provisioning Profiles**: In Xcode open *Settings ▸ Accounts*, select the
+   Apple ID that issued the certificate, and click *Download Manual Profiles* to pull the
+   matching provisioning profile for `com.prestapro.OnDemoApp`.
+3. **Pick the Signing Identity**: Back in *Signing & Capabilities*, ensure the *Team* and
+   *Signing Certificate* fields reference the imported account and certificate.
+4. **Clean Derived Data**: Choose *Product ▸ Clean Build Folder* or remove the derived data
+   directory before rebuilding if the error persists.
+
+If you still encounter signing issues, double-check that the provisioning profile has not
+expired and that it explicitly includes the device UDID you are deploying to.
 
 ## 📱 Screenshots
 
