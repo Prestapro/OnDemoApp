@@ -10,38 +10,36 @@ struct HomeView: View {
     
     var body: some View {
         NavigationStack {
-            Group {
-                if productService.isLoading {
-                    ProgressView("Loading products...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let error = productService.error {
-                    ErrorView(error: error) {
-                        Task {
-                            await productService.loadProducts()
-                        }
-                    }
-                } else if productService.products.isEmpty {
-                    ContentUnavailableView(
-                        "No Products",
-                        systemImage: "tray",
-                        description: Text("No products available at the moment.")
-                    )
-                } else {
-                    List(productService.products) { product in
-                        NavigationLink(destination: ProductDetailView(product: product)) {
-                            ProductRowView(product: product)
-                        }
+            if productService.isLoading {
+                ProgressView("Loading products...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let error = productService.error {
+                ErrorView(error: error) {
+                    Task {
+                        await productService.loadProducts()
                     }
                 }
-            }
-            .navigationTitle("On Store")
-            .refreshable {
-                await productService.refreshProducts()
-            }
-            .task {
-                if productService.products.isEmpty {
-                    await productService.loadProducts()
+            } else if productService.products.isEmpty {
+                ContentUnavailableView(
+                    "No Products",
+                    systemImage: "tray",
+                    description: Text("No products available at the moment.")
+                )
+            } else {
+                List(productService.products) { product in
+                    NavigationLink(destination: ProductDetailView(product: product)) {
+                        ProductRowView(product: product)
+                    }
                 }
+                .refreshable {
+                    await productService.refreshProducts()
+                }
+            }
+        }
+        .navigationTitle("On Store")
+        .task {
+            if productService.products.isEmpty {
+                await productService.loadProducts()
             }
         }
     }

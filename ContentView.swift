@@ -26,7 +26,7 @@ struct ContentView: View {
                     Image(systemName: "cart.fill")
                     Text("Cart")
                 }
-                .badge(cartManager.itemCount > 0 ? cartManager.itemCount : nil)
+                .optionalBadge(cartManager.itemCount)
 
             ProfileView()
                 .tabItem {
@@ -35,6 +35,20 @@ struct ContentView: View {
                 }
         }
         .tint(.blue)
+    }
+}
+
+private extension View {
+    /// Conditionally applies a badge modifier when the provided count is greater than zero.
+    /// - Parameter count: The badge value to display.
+    /// - Returns: Either the original view or the view with a badge applied.
+    @ViewBuilder
+    func optionalBadge(_ count: Int) -> some View {
+        if count > 0 {
+            self.badge(count)
+        } else {
+            self
+        }
     }
 }
 
