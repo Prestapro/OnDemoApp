@@ -13,7 +13,7 @@ final class ProductService {
     var isLoading: Bool = false
     
     /// Error state for handling failures
-    var error: Error?
+    var error: AppError?
     
     private let sampleProducts: [Product] = [
         Product(name: "Running Shoe",
@@ -81,7 +81,7 @@ final class ProductService {
 
             products = sampleProducts
         } catch {
-            self.error = error as? AppError ?? AppError.unknownError
+            self.error = error as? AppError ?? .unknownError
             ErrorHandler.logError(error, context: "ProductService.loadProducts")
         }
     }
