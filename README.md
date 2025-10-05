@@ -87,6 +87,30 @@ OnDemoApp/
 2. **Xcode**: Latest version with iOS 26 SDK
 3. **Build**: Open `OnDemoApp.xcodeproj` and build
 
+### 🔐 Code Signing Troubleshooting
+
+If you have imported the bundled `OnDemoApp.p12` certificate but Xcode still reports a
+code-signing error, try the following steps:
+
+1. **Install to the Login Keychain**: Double-click the `.p12` file and install it into the
+   `login` keychain, making sure the private key appears directly under *My Certificates*.
+2. **Trust Settings**: Open Keychain Access, locate the *OnDemoApp* certificate, open the
+   info panel, and ensure the certificate is set to *Use System Defaults*. If a warning is
+   shown, expand *Trust* and select *Always Trust*, then restart Xcode.
+3. **Refresh Signing Assets**: In Xcode, go to *Settings ▸ Accounts*, select your Apple ID,
+   and press *Download Manual Profiles* to refresh provisioning profiles that match the
+   imported certificate.
+4. **Select the Signing Identity**: In the project editor, select the *OnDemoApp* target,
+   open the *Signing & Capabilities* tab, and explicitly choose the *OnDemoApp* team and
+   signing certificate from the *Signing Certificate* dropdown.
+5. **Clean Derived Data**: From the Xcode menu choose *Product ▸ Clean Build Folder* and,
+   if the error persists, remove the project's Derived Data from *Settings ▸ Locations ▸
+   Derived Data*. Relaunch Xcode before rebuilding.
+
+These steps usually clear residual signing errors after importing a `.p12` file. If the
+problem remains, confirm that the provisioning profile includes the correct bundle
+identifier (`com.example.OnDemoApp`) and that the certificate has not expired.
+
 ## 📱 Screenshots
 
 The app features:
