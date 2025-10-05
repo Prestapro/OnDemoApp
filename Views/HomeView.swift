@@ -16,7 +16,9 @@ struct HomeView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let error = productService.error {
                     ErrorView(error: error) {
-                        productService.loadProducts()
+                        Task {
+                            await productService.loadProducts()
+                        }
                     }
                 } else if productService.products.isEmpty {
                     ContentUnavailableView(
@@ -38,7 +40,7 @@ struct HomeView: View {
             }
             .task {
                 if productService.products.isEmpty {
-                    productService.loadProducts()
+                    await productService.loadProducts()
                 }
             }
         }
