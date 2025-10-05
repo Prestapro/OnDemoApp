@@ -135,7 +135,7 @@ struct SearchView: View {
             }
             .task {
                 if productService.products.isEmpty {
-                    productService.loadProducts()
+                    await productService.loadProducts()
                 }
             }
         }

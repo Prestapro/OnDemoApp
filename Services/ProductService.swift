@@ -59,38 +59,33 @@ final class ProductService {
     ]
     
     init() {
-        loadProducts()
-    }
-    
-    /// Loads products from the data source
-    func loadProducts() {
-        isLoading = true
-        error = nil
-        
-        // Simulate network delay with potential error
-        Task {
-            do {
-                try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-                
-                // Simulate occasional network errors (10% chance)
-                if Int.random(in: 1...10) == 1 {
-                    throw AppError.networkError("Failed to load products")
-                }
-                
-                await MainActor.run {
-                    self.products = self.sampleProducts
-                    self.isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    self.error = error as? AppError ?? AppError.unknownError
-                    self.isLoading = false
-                }
-                ErrorHandler.logError(error, context: "ProductService.loadProducts")
-            }
+        Task { @MainActor [weak self] in
+            await self?.loadProducts()
         }
     }
-    
+
+    /// Loads products from the data source
+    func loadProducts() async {
+        isLoading = true
+        error = nil
+
+        defer { isLoading = false }
+
+        do {
+            try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+
+            // Simulate occasional network errors (10% chance)
+            if Int.random(in: 1...10) == 1 {
+                throw AppError.networkError("Failed to load products")
+            }
+
+            products = sampleProducts
+        } catch {
+            self.error = error as? AppError ?? AppError.unknownError
+            ErrorHandler.logError(error, context: "ProductService.loadProducts")
+        }
+    }
+
     /// Searches for products by name
     /// - Parameter query: Search query string
     /// - Returns: Filtered array of products
@@ -111,7 +106,8 @@ final class ProductService {
     }
     
     /// Refreshes the product catalog
-    func refreshProducts() {
-        loadProducts()
+    func refreshProducts() async {
+        await loadProducts()
     }
 }
+
