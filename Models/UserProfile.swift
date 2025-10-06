@@ -1,0 +1,141 @@
+import Foundation
+
+/// User profile information
+@Observable
+class UserProfile: Codable {
+    var name: String
+    var email: String
+    var phone: String
+    var address: String
+    var membershipType: MembershipType
+    var rating: Double
+    var joinDate: Date
+    
+    init(name: String = "John Doe", 
+         email: String = "john.doe@example.com", 
+         phone: String = "+1 (555) 123-4567", 
+         address: String = "123 Main St, San Francisco, CA 94102",
+         membershipType: MembershipType = .premium,
+         rating: Double = 4.8,
+         joinDate: Date = Date()) {
+        self.name = name
+        self.email = email
+        self.phone = phone
+        self.address = address
+        self.membershipType = membershipType
+        self.rating = rating
+        self.joinDate = joinDate
+    }
+}
+
+/// Membership types
+enum MembershipType: String, CaseIterable, Codable {
+    case basic = "Basic"
+    case premium = "Premium"
+    case vip = "VIP"
+    
+    var displayName: String {
+        switch self {
+        case .basic: return "Basic Member"
+        case .premium: return "Premium Member"
+        case .vip: return "VIP Member"
+        }
+    }
+    
+    var color: String {
+        switch self {
+        case .basic: return "gray"
+        case .premium: return "blue"
+        case .vip: return "purple"
+        }
+    }
+}
+
+/// Payment method information
+struct PaymentMethod: Identifiable, Codable {
+    let id = UUID()
+    var cardNumber: String
+    var cardholderName: String
+    var expiryDate: String
+    var isDefault: Bool
+    
+    var maskedCardNumber: String {
+        let lastFour = String(cardNumber.suffix(4))
+        return "**** **** **** \(lastFour)"
+    }
+}
+
+/// Manager for user profile and settings
+@Observable
+class UserProfileManager {
+    static let shared = UserProfileManager()
+    
+    var profile: UserProfile
+    var paymentMethods: [PaymentMethod] = []
+    
+    private init() {
+        // Load from UserDefaults or create default
+        if let data = UserDefaults.standard.data(forKey: "user_profile"),
+           let profile = try? JSONDecoder().decode(UserProfile.self, from: data) {
+            self.profile = profile
+        } else {
+            self.profile = UserProfile()
+        }
+        
+        loadSamplePaymentMethods()
+    }
+    
+    /// Load sample payment methods
+    private func loadSamplePaymentMethods() {
+        paymentMethods = [
+            PaymentMethod(cardNumber: "1234567890123456", cardholderName: "John Doe", expiryDate: "12/25", isDefault: true),
+            PaymentMethod(cardNumber: "9876543210987654", cardholderName: "John Doe", expiryDate: "08/26", isDefault: false)
+        ]
+    }
+    
+    /// Save profile to UserDefaults
+    func saveProfile() {
+        if let data = try? JSONEncoder().encode(profile) {
+            UserDefaults.standard.set(data, forKey: "user_profile")
+        }
+    }
+    
+    /// Update profile information
+    func updateProfile(name: String, email: String, phone: String, address: String) {
+        profile.name = name
+        profile.email = email
+        profile.phone = phone
+        profile.address = address
+        saveProfile()
+    }
+    
+    /// Add new payment method
+    func addPaymentMethod(_ method: PaymentMethod) {
+        if method.isDefault {
+            // Remove default from other methods
+            for i in 0..<paymentMethods.count {
+                paymentMethods[i].isDefault = false
+            }
+        }
+        paymentMethods.append(method)
+    }
+    
+    /// Remove payment method
+    func removePaymentMethod(at index: Int) {
+        guard index < paymentMethods.count else { return }
+        paymentMethods.remove(at: index)
+    }
+    
+    /// Set default payment method
+    func setDefaultPaymentMethod(at index: Int) {
+        guard index < paymentMethods.count else { return }
+        
+        // Remove default from all methods
+        for i in 0..<paymentMethods.count {
+            paymentMethods[i].isDefault = false
+        }
+        
+        // Set new default
+        paymentMethods[index].isDefault = true
+    }
+}

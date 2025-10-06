@@ -5,8 +5,13 @@ import SwiftUI
 /// Enhanced with settings, order history, and improved user experience.
 struct ProfileView: View {
     @Environment(CartManager.self) private var cartManager
+    @State private var userProfileManager = UserProfileManager.shared
+    @State private var orderManager = OrderManager.shared
     @State private var showingSettings = false
     @State private var showingOrderHistory = false
+    @State private var showingPersonalInfo = false
+    @State private var showingPaymentMethods = false
+    @State private var showingWishlist = false
     
     var body: some View {
         NavigationStack {
@@ -25,11 +30,11 @@ struct ProfileView: View {
                         }
                         
                         VStack(spacing: 4) {
-                            Text("John Doe")
+                            Text(userProfileManager.profile.name)
                                 .font(.title)
                                 .fontWeight(.bold)
                             
-                            Text("Premium Member")
+                            Text(userProfileManager.profile.membershipType.displayName)
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                                 .padding(.horizontal, 12)
@@ -55,7 +60,7 @@ struct ProfileView: View {
                             .frame(height: 40)
                         
                         VStack {
-                            Text("12")
+                            Text("\(orderManager.totalOrders)")
                                 .font(.title2)
                                 .fontWeight(.bold)
                             Text("Orders")
@@ -67,7 +72,7 @@ struct ProfileView: View {
                             .frame(height: 40)
                         
                         VStack {
-                            Text("4.8")
+                            Text(String(format: "%.1f", userProfileManager.profile.rating))
                                 .font(.title2)
                                 .fontWeight(.bold)
                             Text("Rating")
@@ -86,7 +91,7 @@ struct ProfileView: View {
                             title: "Personal Information",
                             subtitle: "Update your details"
                         ) {
-                            // Handle personal info
+                            showingPersonalInfo = true
                         }
                         
                         Divider()
@@ -97,7 +102,7 @@ struct ProfileView: View {
                             title: "Payment Methods",
                             subtitle: "Manage payment options"
                         ) {
-                            // Handle payment methods
+                            showingPaymentMethods = true
                         }
                         
                         Divider()
@@ -119,7 +124,7 @@ struct ProfileView: View {
                             title: "Wishlist",
                             subtitle: "Your saved items"
                         ) {
-                            // Handle wishlist
+                            showingWishlist = true
                         }
                         
                         Divider()
@@ -184,7 +189,7 @@ struct ProfileView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Edit") {
-                        // Handle edit profile
+                        showingPersonalInfo = true
                     }
                 }
             }
@@ -193,6 +198,15 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showingOrderHistory) {
                 OrderHistoryView()
+            }
+            .sheet(isPresented: $showingPersonalInfo) {
+                PersonalInformationView()
+            }
+            .sheet(isPresented: $showingPaymentMethods) {
+                PaymentMethodsView()
+            }
+            .sheet(isPresented: $showingWishlist) {
+                WishlistView()
             }
         }
     }
@@ -279,8 +293,8 @@ struct SettingsView: View {
 
                 Section("Display") {
                     Picker("Appearance", selection: Binding(
-                        get: { preferredTheme },
-                        set: { preferredTheme = $0 }
+                        get: { SettingsTheme(rawValue: preferredThemeRawValue) ?? .system },
+                        set: { preferredThemeRawValue = $0.rawValue }
                     )) {
                         ForEach(SettingsTheme.allCases) { theme in
                             Text(theme.label).tag(theme)
@@ -379,20 +393,72 @@ private enum SettingsTheme: String, CaseIterable, Identifiable {
 
 struct OrderHistoryView: View {
     @Environment(\.dismiss) private var dismiss
+    @State private var orderManager = OrderManager.shared
     
     var body: some View {
         NavigationStack {
-            Text("Order History")
-                .navigationTitle("Order History")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Done") {
-                            dismiss()
-                        }
-                    }
+            if orderManager.orders.isEmpty {
+                ContentUnavailableView(
+                    "No Orders",
+                    systemImage: "shippingbox",
+                    description: Text("You haven't placed any orders yet.")
+                )
+            } else {
+                List(orderManager.orders) { order in
+                    OrderRowView(order: order)
                 }
+            }
         }
+        .navigationTitle("Order History")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Done") {
+                    dismiss()
+                }
+            }
+        }
+    }
+}
+
+struct OrderRowView: View {
+    let order: Order
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Order #\(order.orderNumber)")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    
+                    Text(order.date, style: .date)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("$\(order.totalAmount, specifier: "%.2f")")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                    
+                    Text(order.status.rawValue)
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color(order.status.color).opacity(0.2))
+                        .foregroundColor(Color(order.status.color))
+                        .clipShape(Capsule())
+                }
+            }
+            
+            Text("\(order.items.count) item\(order.items.count == 1 ? "" : "s")")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .padding(.vertical, 4)
     }
 }
 
