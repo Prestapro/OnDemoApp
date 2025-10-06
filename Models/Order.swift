@@ -68,6 +68,7 @@ class OrderManager {
     
     /// Load sample orders for demonstration
     private func loadSampleOrders() {
+        // Generate some sample orders with realistic product IDs
         let sampleOrders = [
             Order(
                 orderNumber: "ORD-001",
@@ -75,8 +76,8 @@ class OrderManager {
                 status: .delivered,
                 totalAmount: 299.99,
                 items: [
-                    OrderItem(productId: "1", productName: "iPhone 15 Pro", price: 999.99, quantity: 1, imageURL: nil),
-                    OrderItem(productId: "2", productName: "AirPods Pro", price: 249.99, quantity: 1, imageURL: nil)
+                    OrderItem(productId: UUID().uuidString, productName: "iPhone 15 Pro", price: 999.99, quantity: 1, imageURL: "iphone"),
+                    OrderItem(productId: UUID().uuidString, productName: "AirPods Pro", price: 249.99, quantity: 1, imageURL: "airpods")
                 ],
                 shippingAddress: "123 Main St, San Francisco, CA 94102",
                 paymentMethod: "Credit Card ****1234"
@@ -87,7 +88,7 @@ class OrderManager {
                 status: .shipped,
                 totalAmount: 149.99,
                 items: [
-                    OrderItem(productId: "3", productName: "MacBook Air", price: 1199.99, quantity: 1, imageURL: nil)
+                    OrderItem(productId: UUID().uuidString, productName: "MacBook Air", price: 1199.99, quantity: 1, imageURL: "laptop")
                 ],
                 shippingAddress: "123 Main St, San Francisco, CA 94102",
                 paymentMethod: "PayPal"
@@ -98,7 +99,7 @@ class OrderManager {
                 status: .processing,
                 totalAmount: 79.99,
                 items: [
-                    OrderItem(productId: "4", productName: "Apple Watch", price: 399.99, quantity: 1, imageURL: nil)
+                    OrderItem(productId: UUID().uuidString, productName: "Apple Watch", price: 399.99, quantity: 1, imageURL: "watch")
                 ],
                 shippingAddress: "123 Main St, San Francisco, CA 94102",
                 paymentMethod: "Apple Pay"

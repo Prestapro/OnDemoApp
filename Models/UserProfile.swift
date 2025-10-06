@@ -139,18 +139,14 @@ class UserProfileManager {
     
     /// Load sample wishlist items
     private func loadSampleWishlistItems() {
-        wishlistItems = [
-            WishlistItem(productId: "1", productName: "iPhone 15 Pro", price: 999.99, imageName: "iphone", category: "Electronics"),
-            WishlistItem(productId: "2", productName: "AirPods Pro", price: 249.99, imageName: "airpods", category: "Electronics")
-        ]
+        // Start with empty wishlist - items will be added when users save them
+        wishlistItems = []
     }
     
     /// Load sample reviews
     private func loadSampleReviews() {
-        productReviews = [
-            ProductReview(productId: "1", productName: "iPhone 15 Pro", rating: 5, reviewText: "Amazing phone! Great camera and battery life.", orderNumber: "ORD-001"),
-            ProductReview(productId: "2", productName: "AirPods Pro", rating: 4, reviewText: "Good sound quality, comfortable to wear.", orderNumber: "ORD-001")
-        ]
+        // Start with empty reviews - they will be added when users actually review products
+        productReviews = []
     }
     
     /// Save profile to UserDefaults
