@@ -672,7 +672,13 @@ struct ReviewFormView: View {
                         HStack(spacing: 4) {
                             ForEach(1...5, id: \.self) { star in
                                 Button(action: {
-                                    rating = star
+                                    if rating == star {
+                                        // If clicking the same star, remove rating
+                                        rating = 0
+                                    } else {
+                                        // Set rating to clicked star
+                                        rating = star
+                                    }
                                 }) {
                                     Image(systemName: star <= rating ? "star.fill" : "star")
                                         .foregroundColor(star <= rating ? .yellow : .gray)

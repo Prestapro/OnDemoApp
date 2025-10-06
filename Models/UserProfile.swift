@@ -125,8 +125,8 @@ class UserProfileManager {
         }
         
         loadSamplePaymentMethods()
-        loadSampleWishlistItems()
-        loadSampleReviews()
+        loadWishlistItems()
+        loadReviews()
     }
     
     /// Load sample payment methods
@@ -137,22 +137,44 @@ class UserProfileManager {
         ]
     }
     
-    /// Load sample wishlist items
-    private func loadSampleWishlistItems() {
-        // Start with empty wishlist - items will be added when users save them
-        wishlistItems = []
+    /// Load wishlist items from UserDefaults
+    private func loadWishlistItems() {
+        if let data = UserDefaults.standard.data(forKey: "wishlist_items"),
+           let items = try? JSONDecoder().decode([WishlistItem].self, from: data) {
+            wishlistItems = items
+        } else {
+            wishlistItems = []
+        }
     }
     
-    /// Load sample reviews
-    private func loadSampleReviews() {
-        // Start with empty reviews - they will be added when users actually review products
-        productReviews = []
+    /// Load reviews from UserDefaults
+    private func loadReviews() {
+        if let data = UserDefaults.standard.data(forKey: "product_reviews"),
+           let reviews = try? JSONDecoder().decode([ProductReview].self, from: data) {
+            productReviews = reviews
+        } else {
+            productReviews = []
+        }
     }
     
     /// Save profile to UserDefaults
     func saveProfile() {
         if let data = try? JSONEncoder().encode(profile) {
             UserDefaults.standard.set(data, forKey: "user_profile")
+        }
+    }
+    
+    /// Save wishlist to UserDefaults
+    func saveWishlist() {
+        if let data = try? JSONEncoder().encode(wishlistItems) {
+            UserDefaults.standard.set(data, forKey: "wishlist_items")
+        }
+    }
+    
+    /// Save reviews to UserDefaults
+    func saveReviews() {
+        if let data = try? JSONEncoder().encode(productReviews) {
+            UserDefaults.standard.set(data, forKey: "product_reviews")
         }
     }
     
@@ -209,12 +231,14 @@ class UserProfileManager {
                 category: category
             )
             wishlistItems.append(wishlistItem)
+            saveWishlist()
         }
     }
     
     /// Remove item from wishlist
     func removeFromWishlist(productId: String) {
         wishlistItems.removeAll { $0.productId == productId }
+        saveWishlist()
     }
     
     /// Check if item is in wishlist
@@ -237,6 +261,7 @@ class UserProfileManager {
             orderNumber: orderNumber
         )
         productReviews.append(review)
+        saveReviews()
     }
     
     /// Get review for product
