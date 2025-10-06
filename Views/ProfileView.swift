@@ -12,6 +12,7 @@ struct ProfileView: View {
     @State private var showingPersonalInfo = false
     @State private var showingPaymentMethods = false
     @State private var showingWishlist = false
+    @State private var showingReviews = false
     
     var body: some View {
         NavigationStack {
@@ -131,6 +132,17 @@ struct ProfileView: View {
                             .padding(.leading, 50)
                         
                         ProfileMenuItem(
+                            icon: "star",
+                            title: "Reviews",
+                            subtitle: "Rate your purchases"
+                        ) {
+                            showingReviews = true
+                        }
+                        
+                        Divider()
+                            .padding(.leading, 50)
+                        
+                        ProfileMenuItem(
                             icon: "gearshape",
                             title: "Settings",
                             subtitle: "App preferences"
@@ -207,6 +219,9 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showingWishlist) {
                 WishlistView()
+            }
+            .sheet(isPresented: $showingReviews) {
+                ReviewsView()
             }
         }
     }
@@ -423,6 +438,7 @@ struct OrderHistoryView: View {
 
 struct OrderRowView: View {
     let order: Order
+    @State private var userProfileManager = UserProfileManager.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -458,9 +474,47 @@ struct OrderRowView: View {
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(order.items.prefix(3)) { item in
                     HStack {
-                        Text("• \(item.productName)")
-                            .font(.subheadline)
-                            .foregroundColor(.primary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("• \(item.productName)")
+                                .font(.subheadline)
+                                .foregroundColor(.primary)
+                            
+                            HStack(spacing: 8) {
+                                Button(action: {
+                                    addToWishlist(item)
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: userProfileManager.isInWishlist(productId: item.productId) ? "heart.fill" : "heart")
+                                            .foregroundColor(.red)
+                                        Text("Save")
+                                            .font(.caption)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                
+                                if !userProfileManager.hasReviewed(productId: item.productId) {
+                                    Button(action: {
+                                        // Navigate to review form
+                                    }) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "star")
+                                                .foregroundColor(.yellow)
+                                            Text("Rate")
+                                                .font(.caption)
+                                        }
+                                    }
+                                    .buttonStyle(.plain)
+                                } else {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "star.fill")
+                                            .foregroundColor(.yellow)
+                                        Text("Rated")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                        }
                         
                         Spacer()
                         
@@ -480,6 +534,181 @@ struct OrderRowView: View {
             .padding(.top, 4)
         }
         .padding(.vertical, 4)
+    }
+    
+    private func addToWishlist(_ item: OrderItem) {
+        userProfileManager.addToWishlist(
+            productId: item.productId,
+            productName: item.productName,
+            price: item.price,
+            imageName: item.imageURL ?? "photo",
+            category: "General"
+        )
+    }
+}
+
+struct ReviewsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var userProfileManager = UserProfileManager.shared
+    @State private var orderManager = OrderManager.shared
+    @State private var showingReviewForm = false
+    @State private var selectedItem: OrderItem?
+    
+    var reviewableItems: [OrderItem] {
+        userProfileManager.getReviewableProducts(from: orderManager.orders)
+    }
+    
+    var body: some View {
+        NavigationStack {
+            if reviewableItems.isEmpty {
+                ContentUnavailableView(
+                    "No Items to Review",
+                    systemImage: "star",
+                    description: Text("You haven't purchased any items yet or have already reviewed all your purchases.")
+                )
+            } else {
+                List(reviewableItems) { item in
+                    ReviewableItemRowView(item: item) {
+                        selectedItem = item
+                        showingReviewForm = true
+                    }
+                }
+            }
+        }
+        .navigationTitle("Reviews")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Done") {
+                    dismiss()
+                }
+            }
+        }
+        .sheet(isPresented: $showingReviewForm) {
+            if let item = selectedItem {
+                ReviewFormView(item: item) {
+                    showingReviewForm = false
+                    selectedItem = nil
+                }
+            }
+        }
+    }
+}
+
+struct ReviewableItemRowView: View {
+    let item: OrderItem
+    let onReview: () -> Void
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.productName)
+                    .font(.headline)
+                
+                Text("$\(item.price, specifier: "%.2f")")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                Text("Qty: \(item.quantity)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            Button("Rate & Review") {
+                onReview()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.small)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+struct ReviewFormView: View {
+    let item: OrderItem
+    let onDismiss: () -> Void
+    
+    @State private var userProfileManager = UserProfileManager.shared
+    @State private var rating = 5
+    @State private var reviewText = ""
+    @State private var isSubmitting = false
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Product") {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(item.productName)
+                                .font(.headline)
+                            Text("$\(item.price, specifier: "%.2f")")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                    }
+                }
+                
+                Section("Rating") {
+                    HStack {
+                        Text("Rate this product:")
+                        Spacer()
+                        HStack(spacing: 4) {
+                            ForEach(1...5, id: \.self) { star in
+                                Button(action: {
+                                    rating = star
+                                }) {
+                                    Image(systemName: star <= rating ? "star.fill" : "star")
+                                        .foregroundColor(.yellow)
+                                        .font(.title2)
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                Section("Review") {
+                    TextField("Write your review...", text: $reviewText, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+            }
+            .navigationTitle("Write Review")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        onDismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Submit") {
+                        submitReview()
+                    }
+                    .disabled(reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
+                }
+            }
+        }
+    }
+    
+    private func submitReview() {
+        isSubmitting = true
+        
+        // Simulate network delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            userProfileManager.addReview(
+                productId: item.productId,
+                productName: item.productName,
+                rating: rating,
+                reviewText: reviewText,
+                orderNumber: "ORD-\(Int.random(in: 1000...9999))"
+            )
+            
+            isSubmitting = false
+            onDismiss()
+        }
     }
 }
 

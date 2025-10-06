@@ -65,6 +65,46 @@ struct PaymentMethod: Identifiable, Codable {
     }
 }
 
+/// Product review information
+struct ProductReview: Identifiable, Codable {
+    let id = UUID()
+    let productId: String
+    let productName: String
+    let rating: Int
+    let reviewText: String
+    let reviewDate: Date
+    let orderNumber: String
+    
+    init(productId: String, productName: String, rating: Int, reviewText: String, orderNumber: String) {
+        self.productId = productId
+        self.productName = productName
+        self.rating = rating
+        self.reviewText = reviewText
+        self.reviewDate = Date()
+        self.orderNumber = orderNumber
+    }
+}
+
+/// Wishlist item with enhanced functionality
+struct WishlistItem: Identifiable, Codable {
+    let id = UUID()
+    let productId: String
+    let productName: String
+    let price: Double
+    let imageName: String
+    let addedDate: Date
+    let category: String
+    
+    init(productId: String, productName: String, price: Double, imageName: String, category: String) {
+        self.productId = productId
+        self.productName = productName
+        self.price = price
+        self.imageName = imageName
+        self.addedDate = Date()
+        self.category = category
+    }
+}
+
 /// Manager for user profile and settings
 @Observable
 class UserProfileManager {
@@ -72,6 +112,8 @@ class UserProfileManager {
     
     var profile: UserProfile
     var paymentMethods: [PaymentMethod] = []
+    var wishlistItems: [WishlistItem] = []
+    var productReviews: [ProductReview] = []
     
     private init() {
         // Load from UserDefaults or create default
@@ -83,6 +125,8 @@ class UserProfileManager {
         }
         
         loadSamplePaymentMethods()
+        loadSampleWishlistItems()
+        loadSampleReviews()
     }
     
     /// Load sample payment methods
@@ -90,6 +134,22 @@ class UserProfileManager {
         paymentMethods = [
             PaymentMethod(cardNumber: "1234567890123456", cardholderName: "John Doe", expiryDate: "12/25", isDefault: true),
             PaymentMethod(cardNumber: "9876543210987654", cardholderName: "John Doe", expiryDate: "08/26", isDefault: false)
+        ]
+    }
+    
+    /// Load sample wishlist items
+    private func loadSampleWishlistItems() {
+        wishlistItems = [
+            WishlistItem(productId: "1", productName: "iPhone 15 Pro", price: 999.99, imageName: "iphone", category: "Electronics"),
+            WishlistItem(productId: "2", productName: "AirPods Pro", price: 249.99, imageName: "airpods", category: "Electronics")
+        ]
+    }
+    
+    /// Load sample reviews
+    private func loadSampleReviews() {
+        productReviews = [
+            ProductReview(productId: "1", productName: "iPhone 15 Pro", rating: 5, reviewText: "Amazing phone! Great camera and battery life.", orderNumber: "ORD-001"),
+            ProductReview(productId: "2", productName: "AirPods Pro", rating: 4, reviewText: "Good sound quality, comfortable to wear.", orderNumber: "ORD-001")
         ]
     }
     
@@ -137,5 +197,74 @@ class UserProfileManager {
         
         // Set new default
         paymentMethods[index].isDefault = true
+    }
+    
+    // MARK: - Wishlist Management
+    
+    /// Add item to wishlist
+    func addToWishlist(productId: String, productName: String, price: Double, imageName: String, category: String) {
+        // Check if item already exists
+        if !wishlistItems.contains(where: { $0.productId == productId }) {
+            let wishlistItem = WishlistItem(
+                productId: productId,
+                productName: productName,
+                price: price,
+                imageName: imageName,
+                category: category
+            )
+            wishlistItems.append(wishlistItem)
+        }
+    }
+    
+    /// Remove item from wishlist
+    func removeFromWishlist(productId: String) {
+        wishlistItems.removeAll { $0.productId == productId }
+    }
+    
+    /// Check if item is in wishlist
+    func isInWishlist(productId: String) -> Bool {
+        return wishlistItems.contains { $0.productId == productId }
+    }
+    
+    // MARK: - Review Management
+    
+    /// Add product review
+    func addReview(productId: String, productName: String, rating: Int, reviewText: String, orderNumber: String) {
+        // Remove existing review for this product if any
+        productReviews.removeAll { $0.productId == productId }
+        
+        let review = ProductReview(
+            productId: productId,
+            productName: productName,
+            rating: rating,
+            reviewText: reviewText,
+            orderNumber: orderNumber
+        )
+        productReviews.append(review)
+    }
+    
+    /// Get review for product
+    func getReview(for productId: String) -> ProductReview? {
+        return productReviews.first { $0.productId == productId }
+    }
+    
+    /// Check if product has been reviewed
+    func hasReviewed(productId: String) -> Bool {
+        return productReviews.contains { $0.productId == productId }
+    }
+    
+    /// Get products that can be reviewed (from orders but not yet reviewed)
+    func getReviewableProducts(from orders: [Order]) -> [OrderItem] {
+        var reviewableItems: [OrderItem] = []
+        
+        for order in orders {
+            for item in order.items {
+                if !hasReviewed(productId: item.productId) {
+                    reviewableItems.append(item)
+                }
+            }
+        }
+        
+        return reviewableItems
     }
 }

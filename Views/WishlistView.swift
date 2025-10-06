@@ -2,20 +2,20 @@ import SwiftUI
 
 struct WishlistView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var wishlistItems: [WishlistItem] = []
+    @State private var userProfileManager = UserProfileManager.shared
     
     var body: some View {
         NavigationStack {
-            if wishlistItems.isEmpty {
+            if userProfileManager.wishlistItems.isEmpty {
                 ContentUnavailableView(
                     "No Wishlist Items",
                     systemImage: "heart",
                     description: Text("Items you save will appear here.")
                 )
             } else {
-                List(wishlistItems) { item in
+                List(userProfileManager.wishlistItems) { item in
                     WishlistItemRowView(item: item) {
-                        removeFromWishlist(item)
+                        userProfileManager.removeFromWishlist(productId: item.productId)
                     }
                 }
             }
@@ -29,43 +29,9 @@ struct WishlistView: View {
                 }
             }
         }
-        .onAppear {
-            loadWishlistItems()
-        }
-    }
-    
-    private func loadWishlistItems() {
-        // Sample wishlist items
-        wishlistItems = [
-            WishlistItem(
-                id: "1",
-                name: "iPhone 15 Pro",
-                price: 999.99,
-                imageURL: nil,
-                addedDate: Calendar.current.date(byAdding: .day, value: -3, to: Date()) ?? Date()
-            ),
-            WishlistItem(
-                id: "2",
-                name: "MacBook Air M2",
-                price: 1199.99,
-                imageURL: nil,
-                addedDate: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
-            )
-        ]
-    }
-    
-    private func removeFromWishlist(_ item: WishlistItem) {
-        wishlistItems.removeAll { $0.id == item.id }
     }
 }
 
-struct WishlistItem: Identifiable {
-    let id: String
-    let name: String
-    let price: Double
-    let imageURL: String?
-    let addedDate: Date
-}
 
 struct WishlistItemRowView: View {
     let item: WishlistItem
@@ -83,7 +49,7 @@ struct WishlistItemRowView: View {
                 )
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(item.name)
+                Text(item.productName)
                     .font(.headline)
                     .lineLimit(2)
                 
