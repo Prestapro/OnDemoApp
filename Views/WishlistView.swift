@@ -59,7 +59,7 @@ struct WishlistView: View {
     }
 }
 
-struct WishlistItem {
+struct WishlistItem: Identifiable {
     let id: String
     let name: String
     let price: Double
