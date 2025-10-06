@@ -348,11 +348,13 @@ struct SettingsView: View {
     }
 
     private func resetPreferences() {
-        notificationsEnabled = true
-        promotionalNotificationsEnabled = false
-        selectedLanguage = "English"
-        textScale = 1.0
-        preferredTheme = .system
+        let defaults = UserDefaults.standard
+
+        defaults.set(true, forKey: "settings_notifications_enabled")
+        defaults.set(false, forKey: "settings_promotional_notifications")
+        defaults.set("English", forKey: "settings_language")
+        defaults.set(1.0, forKey: "settings_text_scale")
+        defaults.set(SettingsTheme.system.rawValue, forKey: "settings_preferred_theme")
     }
 }
 
