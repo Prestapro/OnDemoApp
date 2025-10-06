@@ -238,19 +238,139 @@ struct ProfileMenuItem: View {
 /// Placeholder views for settings and order history
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    
+    @AppStorage("settings_notifications_enabled") private var notificationsEnabled = true
+    @AppStorage("settings_promotional_notifications") private var promotionalNotificationsEnabled = false
+    @AppStorage("settings_language") private var selectedLanguage = "English"
+    @AppStorage("settings_text_scale") private var textScale = 1.0
+    @AppStorage("settings_preferred_theme") private var preferredThemeRawValue = SettingsTheme.system.rawValue
+    @State private var showingResetConfirmation = false
+
+    private let availableLanguages = ["English", "Español", "Deutsch", "Français", "日本語"]
+
+    private var preferredTheme: SettingsTheme {
+        get { SettingsTheme(rawValue: preferredThemeRawValue) ?? .system }
+        set { preferredThemeRawValue = newValue.rawValue }
+    }
+
     var body: some View {
         NavigationStack {
-            Text("Settings")
-                .navigationTitle("Settings")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Done") {
-                            dismiss()
+            Form {
+                Section("Notifications") {
+                    Toggle(isOn: $notificationsEnabled) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Push Notifications")
+                            Text("Get notified about order updates")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    Toggle(isOn: $promotionalNotificationsEnabled) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Promotions & Offers")
+                            Text("Receive personalized deals and discounts")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .disabled(!notificationsEnabled)
+                    .opacity(notificationsEnabled ? 1 : 0.4)
+                }
+
+                Section("Display") {
+                    Picker("Appearance", selection: Binding(
+                        get: { preferredTheme },
+                        set: { preferredTheme = $0 }
+                    )) {
+                        ForEach(SettingsTheme.allCases) { theme in
+                            Text(theme.label).tag(theme)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Text Size")
+                            Spacer()
+                            Text(textScale.formatted(.number.precision(.fractionLength(1))))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
+
+                        Slider(value: $textScale, in: 0.8...1.4, step: 0.1) {
+                            Text("Text Size")
+                        }
+                        Text("Adjust how large content appears in the app")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 6)
+                }
+
+                Section("Localization") {
+                    Picker("Language", selection: $selectedLanguage) {
+                        ForEach(availableLanguages, id: \.self) { language in
+                            Text(language).tag(language)
                         }
                     }
                 }
+
+                Section("Support") {
+                    Link(destination: URL(string: "https://support.demoapp.example")!) {
+                        Label("Help Center", systemImage: "questionmark.circle")
+                    }
+
+                    Button {
+                        showingResetConfirmation = true
+                    } label: {
+                        Label("Reset Settings", systemImage: "arrow.counterclockwise")
+                            .foregroundColor(.red)
+                    }
+                }
+            }
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+            .confirmationDialog("Reset all preferences?", isPresented: $showingResetConfirmation, titleVisibility: .visible) {
+                Button("Reset", role: .destructive) {
+                    resetPreferences()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("This will restore the default settings for notifications, appearance, and language.")
+            }
+        }
+    }
+
+    private func resetPreferences() {
+        notificationsEnabled = true
+        promotionalNotificationsEnabled = false
+        selectedLanguage = "English"
+        textScale = 1.0
+        preferredTheme = .system
+    }
+}
+
+private enum SettingsTheme: String, CaseIterable, Identifiable {
+    case system
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .system:
+            return "Match System"
+        case .light:
+            return "Light"
+        case .dark:
+            return "Dark"
         }
     }
 }
