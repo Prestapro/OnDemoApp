@@ -7,6 +7,7 @@ import SwiftUI
 struct CartView: View {
     @Environment(CartManager.self) private var cartManager
     @State private var showingClearConfirmation = false
+    @State private var showingCheckout = false
 
     var body: some View {
         NavigationStack {
@@ -42,7 +43,7 @@ struct CartView: View {
                                 Spacer()
                                 
                                 Button("Checkout") {
-                                    // Handle checkout
+                                    showingCheckout = true
                                 }
                                 .buttonStyle(.borderedProminent)
                                 .controlSize(.large)
@@ -72,6 +73,19 @@ struct CartView: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("Are you sure you want to remove all items from your cart?")
+            }
+            .sheet(isPresented: $showingCheckout) {
+                // CheckoutView() // TODO: Add CheckoutView to project
+                Text("Checkout functionality coming soon!")
+                    .navigationTitle("Checkout")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Done") {
+                                showingCheckout = false
+                            }
+                        }
+                    }
             }
         }
     }
