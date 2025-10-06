@@ -645,7 +645,7 @@ struct ReviewFormView: View {
     let onDismiss: () -> Void
     
     @State private var userProfileManager = UserProfileManager.shared
-    @State private var rating = 5
+    @State private var rating = 0
     @State private var reviewText = ""
     @State private var isSubmitting = false
     
@@ -675,7 +675,7 @@ struct ReviewFormView: View {
                                     rating = star
                                 }) {
                                     Image(systemName: star <= rating ? "star.fill" : "star")
-                                        .foregroundColor(.yellow)
+                                        .foregroundColor(star <= rating ? .yellow : .gray)
                                         .font(.title2)
                                 }
                             }
@@ -701,7 +701,7 @@ struct ReviewFormView: View {
                     Button("Submit") {
                         submitReview()
                     }
-                    .disabled(reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
+                    .disabled(rating == 0 || reviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
                 }
             }
         }
