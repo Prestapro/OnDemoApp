@@ -409,6 +409,8 @@ private enum SettingsTheme: String, CaseIterable, Identifiable {
 struct OrderHistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var orderManager = OrderManager.shared
+    @State private var showingReviewForm = false
+    @State private var selectedItem: OrderItem?
     
     var body: some View {
         NavigationStack {
@@ -420,7 +422,10 @@ struct OrderHistoryView: View {
                 )
             } else {
                 List(orderManager.orders) { order in
-                    OrderRowView(order: order)
+                    OrderRowView(order: order) { item in
+                        selectedItem = item
+                        showingReviewForm = true
+                    }
                 }
             }
         }
@@ -433,11 +438,20 @@ struct OrderHistoryView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingReviewForm) {
+            if let item = selectedItem {
+                ReviewFormView(item: item) {
+                    showingReviewForm = false
+                    selectedItem = nil
+                }
+            }
+        }
     }
 }
 
 struct OrderRowView: View {
     let order: Order
+    let onReviewItem: (OrderItem) -> Void
     @State private var userProfileManager = UserProfileManager.shared
     
     var body: some View {
@@ -494,7 +508,7 @@ struct OrderRowView: View {
                                 
                                 if !userProfileManager.hasReviewed(productId: item.productId) {
                                     Button(action: {
-                                        // Navigate to review form
+                                        onReviewItem(item)
                                     }) {
                                         HStack(spacing: 4) {
                                             Image(systemName: "star")
