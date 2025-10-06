@@ -454,9 +454,30 @@ struct OrderRowView: View {
                 }
             }
             
-            Text("\(order.items.count) item\(order.items.count == 1 ? "" : "s")")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            // Show item details
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(order.items.prefix(3)) { item in
+                    HStack {
+                        Text("• \(item.productName)")
+                            .font(.subheadline)
+                            .foregroundColor(.primary)
+                        
+                        Spacer()
+                        
+                        Text("Qty: \(item.quantity)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                if order.items.count > 3 {
+                    Text("+ \(order.items.count - 3) more item\(order.items.count - 3 == 1 ? "" : "s")")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .italic()
+                }
+            }
+            .padding(.top, 4)
         }
         .padding(.vertical, 4)
     }
